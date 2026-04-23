@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Maker Guide - Build Anything!</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0f0e0c; color: #fff; font-family: Arial, sans-serif; }
+.header { background: linear-gradient(135deg, #1a1200, #0f0e0c); border-bottom: 1px solid rgba(255,149,0,0.2); padding: 28px 24px; text-align: center; }
+.header h1 { font-size: 42px; font-weight: 900; background: linear-gradient(135deg, #fff, #ffcc00, #ff6600); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.header p { color: rgba(255,255,255,0.45); font-size: 14px; margin-top: 8px; }
+.container { max-width: 680px; margin: 0 auto; padding: 32px 20px 80px; }
+.card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,149,0,0.2); border-radius: 20px; padding: 28px 24px; margin-bottom: 24px; }
+label { display: block; font-size: 12px; color: #ff9500; letter-spacing: 0.1em; margin-bottom: 10px; font-weight: 700; }
+input, textarea, select { width: 100%; background: rgba(255,255,255,0.06); border: 2px solid rgba(255,149,0,0.25); border-radius: 12px; padding: 16px 18px; color: #fff; font-size: 15px; outline: none; font-family: inherit; }
+textarea { resize: vertical; line-height: 1.6; }
+.row { display: flex; gap: 12px; margin: 16px 0; flex-wrap: wrap; }
+.row > div { flex: 1; min-width: 140px; }
+button { width: 100%; padding: 18px; border-radius: 14px; border: none; background: linear-gradient(135deg, #ff9500, #ff5500); color: #fff; font-size: 16px; font-weight: 900; cursor: pointer; margin-top: 16px; }
+button:disabled { background: rgba(255,149,0,0.2); color: rgba(255,149,0,0.4); cursor: not-allowed; }
+.result { display: none; }
+.summary-card { background: linear-gradient(135deg, rgba(255,149,0,0.1), rgba(255,80,0,0.05)); border: 1px solid rgba(255,149,0,0.25); border-radius: 20px; padding: 28px 24px; margin-bottom: 16px; text-align: center; }
+.badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 16px; }
+.badge { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; }
+.materials-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.material-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 14px 16px; }
+.section-title { color: #ff9500; font-size: 14px; letter-spacing: 0.1em; margin: 20px 0 12px; font-weight: 700; }
+.step { display: flex; gap: 16px; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.07); }
+.step-num { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, #ff9500, #ff5500); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 15px; flex-shrink: 0; }
+.sell-tip { background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,149,0,0.08)); border: 1px solid rgba(255,200,0,0.3); border-radius: 14px; padding: 20px 22px; margin-top: 16px; }
+.loader { text-align: center; padding: 40px; display: none; }
+.spinner { width: 48px; height: 48px; border: 3px solid rgba(255,149,0,0.2); border-top: 3px solid #ff9500; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="header">
+<div style="font-size:13px;color:#ff9500;margin-bottom:8px;">🔨 AI Maker Guide</div>
+<h1>Build Anything!</h1>
+<p>Enter what you want to make — AI will teach you the materials, tools, and steps</p>
+</div>
+<div class="container">
+<div class="card">
+<label>WHAT DO YOU WANT TO MAKE?</label>
+<input type="text" id="itemInput" placeholder="e.g. Wooden bookshelf, Chocolate cake, Phone stand...">
+<div class="row">
+<div>
+<label>CATEGORY (OPTIONAL)</label>
+<select id="categoryInput">
+<option value="">Select a category</option>
+<option>🪵 Woodworking</option>
+<option>🍳 Cooking & Baking</option>
+<option>🧵 Sewing & Fashion</option>
+<option>🎨 Art & Crafts</option>
+<option>🔧 Repair & DIY</option>
+</select>
+</div>
+<div>
+<label>LEVEL (OPTIONAL)</label>
+<select id="levelInput">
+<option value="">Any level</option>
+<option>Beginner</option>
+<option>Intermediate</option>
+<option>Advanced</option>
+</select>
+</div>
+</div>
+<button onclick="analyze()" id="btn">🚀 Show Me How To Make It!</button>
+</div>
+<div class="loader" id="loader">
+<div class="spinner"></div>
+<p style="margin-top:16px;color:#ff9500;">AI is analyzing...</p>
+</div>
+<div class="result" id="result"></div>
+</div>
+<script>
+async function analyze() {
+const item = document.getElementById('itemInput').value;
+if (!item) return;
+document.getElementById('loader').style.display = 'block';
+document.getElementById('result').style.display = 'none';
+document.getElementById('btn').disabled = true;
+const prompt = `You are a DIY and making expert. Return ONLY a JSON object for how to make the following item. No markdown, no explanation, JSON only.
+Item: ${item}
+Category: ${document.getElementById('categoryInput').value || 'General'}
+Level: ${document.getElementById('levelInput').value || 'Beginner'}
+Return this exact JSON:
+{"title":"item name","emoji":"one emoji","summary":"2 sentence overview","difficulty":"Easy or Medium or Hard","totalTime":"estimated time","totalCost":"estimated cost in USD","materials":[{"name":"material name","amount":"quantity","cost":"price","where":"where to buy"}],"tools":["tool1","tool2"],"steps":[{"title":"step title","detail":"detailed explanation","tip":"optional tip"}],"warnings":["warning1"],"sellTip":"specific advice on how to sell this item for profit"}
+5-10 materials, 5-8 steps. Reply in English only.`;
+try {
+const res = await fetch('https://api.anthropic.com/v1/messages', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{role: 'user', content: prompt}]})
+});
+const data = await res.json();
+const raw = data.content.map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
+const r = JSON.parse(raw);
+document.getElementById('result').innerHTML = `
+<div class="summary-card">
+<div style="font-size:52px">${r.emoji}</div>
+<h2 style="font-size:24px;margin:8px 0">${r.title}</h2>
+<p style="color:rgba(255,255,255,0.6);line-height:1.7">${r.summary}</p>
+<div class="badges">
+<div class="badge" style="background:rgba(255,149,0,0.15);border:1px solid rgba(255,149,0,0.3);color:#ff9500">Difficulty: ${r.difficulty}</div>
+<div class="badge" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#ccc">⏱ ${r.totalTime}</div>
+<div class="badge" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);color:#ccc">💵 ${r.totalCost}</div>
+</div>
+</div>
+<div class="section-title">🧱 MATERIALS NEEDED</div>
+<div class="materials-grid">${r.materials.map(m=>`<div class="material-card"><div style="font-weight:700">${m.name}</div><div style="color:rgba(255,255,255,0.45);font-size:12px">${m.amount}</div><div style="color:#ff9500;font-size:12px">${m.cost}</div><div style="color:rgba(255,255,255,0.35);font-size:11px">📍 ${m.where}</div></div>`).join('')}</div>
+<div class="section-title">🔧 TOOLS NEEDED</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">${r.tools.map(t=>`<span style="padding:6px 14px;border-radius:20px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);font-size:13px">${t}</span>`).join('')}</div>
+<div class="section-title">📋 STEP BY STEP</div>
+<div>${r.steps.map((s,i)=>`<div class="step"><div class="step-num">${i+1}</div><div><div style="font-weight:700;margin-bottom:4px">${s.title}</div><div style="color:rgba(255,255,255,0.6);font-size:14px;line-height:1.6">${s.detail}</div>${s.tip?`<div style="margin-top:8px;padding:6px 12px;background:rgba(255,149,0,0.1);border:1px solid rgba(255,149,0,0.25);border-radius:8px;color:#ffb340;font-size:12px">💡 ${s.tip}</div>`:''}</div></div>`).join('')}</div>
+<div class="sell-tip"><div style="color:#ffd700;font-weight:700;margin-bottom:8px">💰 HOW TO SELL FOR PROFIT</div><p style="color:rgba(255,235,150,0.8);font-size:14px;line-height:1.7">${r.sellTip}</p></div>
+<button onclick="location.reload()" style="margin-top:20px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.45)">← Make Something Else</button>
+`;
+document.getElementById('result').style.display = 'block';
+} catch(e) {
+alert('Error occurred. Please try again.');
+}
+document.getElementById('loader').style.display = 'none';
+document.getElementById('btn').disabled = false;
+}
+</script>
+</body>
+</html>
