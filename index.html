@@ -75,12 +75,15 @@ button:disabled { background: rgba(255,149,0,0.2); color: rgba(255,149,0,0.4); c
 <div class="result" id="result"></div>
 </div>
 <script>
+const OPENROUTER_KEY = 'sk-or-v1-4f9d1730999238ab8f188c2a8939352494c3ca404d2c9a4097d78ae9f7f9461';
+
 async function analyze() {
 const item = document.getElementById('itemInput').value;
 if (!item) return;
 document.getElementById('loader').style.display = 'block';
 document.getElementById('result').style.display = 'none';
 document.getElementById('btn').disabled = true;
+
 const prompt = `You are a DIY and making expert. Return ONLY a JSON object for how to make the following item. No markdown, no explanation, JSON only.
 Item: ${item}
 Category: ${document.getElementById('categoryInput').value || 'General'}
@@ -88,14 +91,21 @@ Level: ${document.getElementById('levelInput').value || 'Beginner'}
 Return this exact JSON:
 {"title":"item name","emoji":"one emoji","summary":"2 sentence overview","difficulty":"Easy or Medium or Hard","totalTime":"estimated time","totalCost":"estimated cost in USD","materials":[{"name":"material name","amount":"quantity","cost":"price","where":"where to buy"}],"tools":["tool1","tool2"],"steps":[{"title":"step title","detail":"detailed explanation","tip":"optional tip"}],"warnings":["warning1"],"sellTip":"specific advice on how to sell this item for profit"}
 5-10 materials, 5-8 steps. Reply in English only.`;
+
 try {
-const res = await fetch('https://api.anthropic.com/v1/messages', {
+const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
 method: 'POST',
-headers: {'Content-Type': 'application/json'},
-body: JSON.stringify({model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages: [{role: 'user', content: prompt}]})
+headers: {
+'Content-Type': 'application/json',
+'Authorization': `Bearer ${OPENROUTER_KEY}`
+},
+body: JSON.stringify({
+model: 'meta-llama/llama-3.3-70b-instruct:free',
+messages: [{ role: 'user', content: prompt }]
+})
 });
 const data = await res.json();
-const raw = data.content.map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
+const raw = data.choices[0].message.content.replace(/```json|```/g, '').trim();
 const r = JSON.parse(raw);
 document.getElementById('result').innerHTML = `
 <div class="summary-card">
