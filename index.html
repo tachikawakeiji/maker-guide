@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Maker Guide - Build Anything!</title>
+<title>AI Maker Guide</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: #0f0e0c; color: #fff; font-family: Arial, sans-serif; }
@@ -80,26 +80,13 @@ if (!item) return;
 document.getElementById('loader').style.display = 'block';
 document.getElementById('result').style.display = 'none';
 document.getElementById('btn').disabled = true;
-
-const prompt = 'You are a DIY expert. Return ONLY valid JSON for how to make: ' + item + '. Use this exact format: {"title":"name","emoji":"emoji","summary":"2 sentences","difficulty":"Easy or Medium or Hard","totalTime":"time","totalCost":"cost in USD","materials":[{"name":"name","amount":"amount","cost":"cost","where":"store"}],"tools":["tool1","tool2"],"steps":[{"title":"title","detail":"detail","tip":"tip or empty string"}],"warnings":["warning"],"sellTip":"how to sell for profit"}';
-
 try {
-const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+const res = await fetch('/api/analyze', {
 method: 'POST',
-headers: {
-'Content-Type': 'application/json',
-'Authorization': 'Bearer sk-or-v1-4f9d1730999238ab8f188c2a8939352494c3ca404d2c9a4097d78ae9f7f9461',
-'HTTP-Referer': 'https://maker-guide.vercel.app',
-'X-Title': 'AI Maker Guide'
-},
-body: JSON.stringify({
-model: 'google/gemini-2.0-flash-exp:free',
-messages: [{ role: 'user', content: prompt }],
-response_format: { type: 'json_object' }
-})
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({item: item, category: document.getElementById('categoryInput').value, level: document.getElementById('levelInput').value})
 });
-const data = await res.json();
-const r = JSON.parse(data.choices[0].message.content);
+const r = await res.json();
 document.getElementById('result').innerHTML = `
 <div class="summary-card">
 <div style="font-size:52px">${r.emoji}</div>
